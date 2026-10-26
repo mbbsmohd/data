@@ -1,0 +1,32 @@
+{
+  "name": "bukar-data-sub",
+  "version": "2.0.0",
+  "description": "Bukar Data Sub — Automated Telecom, VTU, and Real-Time Financial Management System",
+  "private": true,
+  "scripts": {
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "build": "npm run build:frontend",
+    "start": "node --import tsx backend/src/server.ts",
+    "start:prod": "node --import tsx backend/src/server.ts",
+    "backend": "npm --prefix backend start",
+    "frontend": "npm --prefix frontend run dev",
+    "dev": "npm --prefix backend run dev",
+    "test": "npm --prefix backend run test",
+    "test:surity": "npm --prefix backend run test",
+    "db:reset": "node --import tsx backend/src/database/reset_to_production.ts",
+    "db:inspect": "node --import tsx backend/src/database/inspect_tables.ts"
+  },
+  "keywords": [
+    "fintech",
+    "vtu",
+    "telecom",
+    "wallet",
+    "bukar-data-sub",
+    "nigeria",
+    "airtime",
+    "data"
+  ],
+  "author": "Bukar Data Sub Ltd",
+  "license": "UNLICENSED"
+}

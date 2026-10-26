@@ -1,0 +1,23 @@
+{
+  "short_name": "Bukar Data",
+  "name": "Bukar Data Sub — Automated Telecom & Data Platform",
+  "description": "High-Speed Automated Telecom VTU, Electricity, Cable TV, and Financial Services Platform",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#F8FAFC",
+  "theme_color": "#1E5BF9",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
+}

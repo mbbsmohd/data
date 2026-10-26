@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "ABK Data Link",
+    "slug": "abk-data-link",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E5BF9"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abkdata.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Enable Face ID to securely authenticate and authorize financial transactions."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1E5BF9"
+      },
+      "package": "com.abkdata.app",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "VIBRATE",
+        "INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
