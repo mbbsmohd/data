@@ -1,4 +1,4 @@
-# ABK Data Link & FinTech Applications Platform
+#  Data Link & FinTech Applications Platform
 
 A secure, high-performance, full-stack Data and FinTech platform providing authoritative telecom integrations, automated VTU delivery, payment gateway management, SIM hosting, multi-channel notification engine, and advanced administration.
 
@@ -6,7 +6,7 @@ A secure, high-performance, full-stack Data and FinTech platform providing autho
 
 ## 📸 Implemented Interfaces Matching User Screenshots
 
-1. **ABK Data Link Mobile App View (Screenshots 1 & 4)**
+1. ** Data Link Mobile App View (Screenshots 1 & 4)**
    - Header with greeting: *"Hello, Mohammed / Welcome back to your dashboard"*, notification bell, and logout.
    - Royal Blue Gradient Wallet Card: Authoritative balance (`₦59.04`), `Active` status badge, `+ Fund Wallet`, and `History`.
    - *"Secure your login"* banner with Biometric / Fingerprint / Face ID toggle.
