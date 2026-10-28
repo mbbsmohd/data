@@ -1,5 +1,28 @@
+import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+
+function resolveDbPath(): string {
+  if (process.env.DB_PATH) return path.resolve(process.env.DB_PATH);
+
+  // Look for single ready-made database file first, then standard paths
+  const candidates = [
+    path.resolve(process.cwd(), 'database.sqlite'),
+    path.resolve(process.cwd(), '..', 'database.sqlite'),
+    path.resolve(process.cwd(), 'data', 'platform.sqlite'),
+    path.resolve(process.cwd(), 'backend', 'data', 'platform.sqlite'),
+    path.resolve(process.cwd(), 'database', 'bukardatasub_production.sqlite'),
+    path.resolve(process.cwd(), '..', 'database', 'bukardatasub_production.sqlite')
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return path.resolve(process.cwd(), 'data', 'platform.sqlite');
+}
 
 export const CONFIG = {
   PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 5000,
@@ -7,7 +30,7 @@ export const CONFIG = {
   JWT_SECRET: process.env.JWT_SECRET || 'data_platform_super_jwt_secret_key_2026_x89312891398!',
   JWT_EXPIRES_IN: '24h',
   REFRESH_TOKEN_EXPIRES_IN: '7d',
-  DB_PATH: process.env.DB_PATH || path.resolve(process.cwd(), 'data', 'platform.sqlite'),
+  DB_PATH: resolveDbPath(),
   BACKUP_DIR: path.resolve(process.cwd(), 'data', 'backups'),
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || crypto.createHash('sha256').update('master_key_secure_2026').digest('hex'),
   CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
