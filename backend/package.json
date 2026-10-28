@@ -8,6 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "build": "tsc",
+    "generate:db": "tsx src/database/generate_ready_made_db.ts",
     "test": "tsx tests/run_tests.ts"
   },
   "dependencies": {

@@ -21,7 +21,6 @@ build/
 *.local
 
 # Database Runtime & Temporary Files
-*.sqlite
 *.sqlite-wal
 *.sqlite-shm
 *.sqlite-journal
@@ -31,6 +30,7 @@ backend/data/*.sqlite*
 backend/data/*.backup*
 backend/data/backups/
 !backend/data/.gitkeep
+!database/bukardatasub_production.sqlite
 
 # Mobile (Expo / React Native)
 .expo/
