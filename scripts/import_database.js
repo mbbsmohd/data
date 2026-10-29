@@ -75,6 +75,7 @@ try {
   const admin = verifyDb.prepare('SELECT email, role, tier FROM users WHERE id = ?').get('usr_root_admin');
   const plans = verifyDb.prepare('SELECT count(*) as c FROM service_plans').get();
   const gateways = verifyDb.prepare('SELECT count(*) as c FROM payment_gateways').get();
+  const reserved = verifyDb.prepare('SELECT count(*) as c FROM reserved_accounts').get();
   verifyDb.close();
 
   console.log('\n======================================================');

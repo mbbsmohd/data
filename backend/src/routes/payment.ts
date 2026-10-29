@@ -33,6 +33,34 @@ router.put('/gateways/:id', authenticate, requireRole('super_admin'), (req: Requ
 });
 
 /**
+ * Customer: Get All Dedicated Reserved Virtual Accounts (Monnify / PalmPay / Paystack)
+ */
+router.get(['/reserved-accounts', '/reserve-accounts'], authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    let accounts = PaymentGatewayService.getReservedAccounts(req.user!.id) as any[];
+    if (!accounts || accounts.length === 0) {
+      await PaymentGatewayService.getOrGenerateVirtualAccount(req.user!.id);
+      accounts = PaymentGatewayService.getReservedAccounts(req.user!.id) as any[];
+    }
+    res.json({ success: true, count: accounts.length, accounts });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Super Admin: List All Dedicated Reserved Accounts in the System
+ */
+router.get('/admin/reserved-accounts', authenticate, requireRole('super_admin'), (req: Request, res: Response): void => {
+  try {
+    const accounts = PaymentGatewayService.getAllReservedAccounts();
+    res.json({ success: true, count: accounts.length, accounts });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
  * Customer: Get Automated Dedicated Virtual Account (Wema Bank / Titan Bank / Moniepoint)
  */
 router.get('/virtual-account', authenticate, async (req: Request, res: Response): Promise<void> => {

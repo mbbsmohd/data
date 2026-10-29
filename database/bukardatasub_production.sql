@@ -2,7 +2,7 @@
 -- BUKAR DATA SUB — AUTHORITATIVE PRODUCTION DATABASE IMPORT DUMP
 -- Compatible with: SQLite 3.35+, DBeaver, TablePlus, DB Browser, Cloud SQLite
 -- Super Administrator: admin@bukardatasub.com | Password: BukarData#2026 | PIN: 1234
--- Generated: 2026-10-28T18:09:38.715Z
+-- Generated: 2026-10-29T17:06:50.583Z
 -- ==============================================================================
 
 PRAGMA foreign_keys = OFF;
@@ -12,7 +12,7 @@ BEGIN TRANSACTION;
 -- ==============================================================================
 -- BUKAR DATA SUB — PRODUCTION DATABASE SCHEMA & INITIAL DATA
 -- Version: 2.0 Production Standard
--- Generated: 2026-10-28T18:09:37.994Z
+-- Generated: 2026-10-29T17:06:49.932Z
 -- ==============================================================================
 
 -- 1. System Settings & White-Label Branding
@@ -137,6 +137,31 @@ CREATE TABLE IF NOT EXISTS payment_requests (
   expires_at TEXT,
   created_at TEXT NOT NULL
 );
+
+
+-- 5b. Dedicated Virtual Reserved Accounts (Monnify, PalmPay, Paystack)
+CREATE TABLE IF NOT EXISTS reserved_accounts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL DEFAULT 'monnify', -- monnify, palmpay, paystack, flutterwave, manual_bank
+  bank_name TEXT NOT NULL, -- Wema Bank, Sterling Bank, Fidelity Bank, PalmPay MFB, Moniepoint MFB
+  bank_code TEXT DEFAULT '',
+  account_number TEXT NOT NULL,
+  account_name TEXT NOT NULL,
+  account_reference TEXT NOT NULL,
+  reservation_reference TEXT,
+  currency TEXT NOT NULL DEFAULT 'NGN',
+  status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, INACTIVE, SUSPENDED
+  bvn TEXT,
+  nin TEXT,
+  collection_channel TEXT DEFAULT 'RESERVED_ACCOUNT',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Ready-Made View Aliases (Matching reserveAccounts and reserve_accounts)
+CREATE VIEW IF NOT EXISTS reserveAccounts AS SELECT * FROM reserved_accounts;
+CREATE VIEW IF NOT EXISTS reserve_accounts AS SELECT * FROM reserved_accounts;
 
 -- 6. Services Catalogue
 CREATE TABLE IF NOT EXISTS services (
@@ -719,6 +744,12 @@ CREATE INDEX IF NOT EXISTS idx_staff_tasks_status ON staff_tasks(status, priorit
 CREATE INDEX IF NOT EXISTS idx_staff_tasks_assignee ON staff_tasks(assigned_to_user_id);
 CREATE INDEX IF NOT EXISTS idx_task_comments_task ON staff_task_comments(task_id, created_at);
 
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_user ON reserved_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_num ON reserved_accounts(account_number);
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_ref ON reserved_accounts(account_reference);
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_provider ON reserved_accounts(provider);
+
+
 
 -- ==============================================================================
 -- DATA INSERTS FOR PRODUCTION BASELINE
@@ -728,10 +759,17 @@ CREATE INDEX IF NOT EXISTS idx_task_comments_task ON staff_task_comments(task_id
 INSERT OR REPLACE INTO system_settings (id, app_name, app_tagline, logo_url, primary_color, accent_color, support_email, support_phone, whatsapp_number, currency, currency_symbol, announcement_text, announcement_type, announcement_active, announcement_target, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure, smtp_from_name, smtp_from_email, maintenance_mode, maintenance_message, maintenance_scope, maintenance_start_time, maintenance_end_time, maintenance_bypass_ips, referral_bonus_amount, referral_commission_percent, updated_at) VALUES ('sys_settings_001', 'Bukar Data Sub', 'Automated Telecom & Data Platform', '', '#1E5BF9', '#10B981', 'support@bukardatasub.com', '09131797675', '2349131797675', 'NGN', '₦', '⚡ High-speed SME Data and SunKing Solar PIN delivery channels are 100% operational.', 'info', 1, 'all', '', 587, '', '', 0, '', '', 0, 'System undergoing scheduled optimization. We will be back online shortly.', 'all', '', '', '', 100, 1.5, '2026-10-26T12:00:00.000Z');
 
 -- Table: users (1 records)
-INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role, sub_admin_role, tier, status, transaction_pin_hash, mfa_enabled, mfa_secret, biometric_enabled, biometric_public_key, whatsapp_number, referral_code, referred_by, total_funded, vtu_purchases, failed_pin_attempts, pin_locked_until, two_factor_enabled, active_session_id, last_active_at, last_login_ip, virtual_account_bank, virtual_account_number, virtual_account_name, virtual_account_reference, address, state, date_of_birth, avatar_url, bio, sound_enabled, account_locked, lock_reason, created_at, updated_at) VALUES ('usr_root_admin', 'Super Administrator', 'admin@bukardatasub.com', '08000000001', '$2b$12$OOpvlttGPgm/0sGPfJylcePx.Ip0Zl7YAZgUfEQdcjiRYMDe7GKve', 'super_admin', NULL, 3, 'active', '$2b$12$OOpvlttGPgm/0sGPfJylceG6A0zZQZA3EkIzDXSVEJqeo62K16jTm', 0, NULL, 0, NULL, NULL, 'BDS-ADMIN', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role, sub_admin_role, tier, status, transaction_pin_hash, mfa_enabled, mfa_secret, biometric_enabled, biometric_public_key, whatsapp_number, referral_code, referred_by, total_funded, vtu_purchases, failed_pin_attempts, pin_locked_until, two_factor_enabled, active_session_id, last_active_at, last_login_ip, virtual_account_bank, virtual_account_number, virtual_account_name, virtual_account_reference, address, state, date_of_birth, avatar_url, bio, sound_enabled, account_locked, lock_reason, created_at, updated_at) VALUES ('usr_root_admin', 'Super Administrator', 'admin@bukardatasub.com', '08000000001', '$2b$12$VR.gADaeUzG/3BvZKbK9p.h.FqgWyEebsQGTXFWbKTethDIHtpYs6', 'super_admin', NULL, 3, 'active', '$2b$12$VR.gADaeUzG/3BvZKbK9p.z9lEchCEo8IYVezsaAcZwcLgy1Jehka', 0, NULL, 0, NULL, NULL, 'BDS-ADMIN', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
 
 -- Table: wallets (1 records)
 INSERT OR REPLACE INTO wallets (id, user_id, balance, commission_balance, currency, is_locked, created_at, updated_at) VALUES ('wal_root_admin', 'usr_root_admin', 0, 0, 'NGN', 0, '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
+
+-- Table: reserved_accounts (5 records)
+INSERT OR REPLACE INTO reserved_accounts (id, user_id, provider, bank_name, bank_code, account_number, account_name, account_reference, reservation_reference, currency, status, bvn, nin, collection_channel, created_at, updated_at) VALUES ('res_wema_001', 'usr_root_admin', 'monnify', 'Wema Bank', '035', '9938128312', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-WEMA', 'MNFY_RES_001', 'NGN', 'ACTIVE', NULL, NULL, 'RESERVED_ACCOUNT', '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO reserved_accounts (id, user_id, provider, bank_name, bank_code, account_number, account_name, account_reference, reservation_reference, currency, status, bvn, nin, collection_channel, created_at, updated_at) VALUES ('res_sterling_001', 'usr_root_admin', 'monnify', 'Sterling Bank', '232', '8812739123', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-STERLING', 'MNFY_RES_002', 'NGN', 'ACTIVE', NULL, NULL, 'RESERVED_ACCOUNT', '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO reserved_accounts (id, user_id, provider, bank_name, bank_code, account_number, account_name, account_reference, reservation_reference, currency, status, bvn, nin, collection_channel, created_at, updated_at) VALUES ('res_fidelity_001', 'usr_root_admin', 'monnify', 'Fidelity Bank', '070', '7712391283', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-FIDELITY', 'MNFY_RES_003', 'NGN', 'ACTIVE', NULL, NULL, 'RESERVED_ACCOUNT', '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO reserved_accounts (id, user_id, provider, bank_name, bank_code, account_number, account_name, account_reference, reservation_reference, currency, status, bvn, nin, collection_channel, created_at, updated_at) VALUES ('res_palmpay_001', 'usr_root_admin', 'palmpay', 'PalmPay MFB', '999991', '8012345678', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-PALMPAY', 'PLM_RES_001', 'NGN', 'ACTIVE', NULL, NULL, 'RESERVED_ACCOUNT', '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO reserved_accounts (id, user_id, provider, bank_name, bank_code, account_number, account_name, account_reference, reservation_reference, currency, status, bvn, nin, collection_channel, created_at, updated_at) VALUES ('res_moniepoint_001', 'usr_root_admin', 'manual_bank', 'Moniepoint MFB', '50515', '9131797675', 'BUKAR DATA SUB LTD', 'BDS-CORP-MONIEPOINT', 'MNP_CORP_001', 'NGN', 'ACTIVE', NULL, NULL, 'RESERVED_ACCOUNT', '2026-10-26T12:00:00.000Z', '2026-10-26T12:00:00.000Z');
 
 -- Table: payment_gateways (5 records)
 INSERT OR REPLACE INTO payment_gateways (id, name, is_active, is_default, environment, public_key, secret_key_encrypted, api_key_encrypted, contract_code, webhook_secret_encrypted, merchant_id, bank_name, account_number, account_name, updated_at) VALUES ('monnify', 'Monnify Automated Reserved Accounts', 1, 1, 'production', '', '', '', '', '', '', 'Wema Bank', '', 'BUKAR DATA SUB / MOHAMMED ADAMU', '2026-10-26T12:00:00.000Z');
@@ -741,11 +779,11 @@ INSERT OR REPLACE INTO payment_gateways (id, name, is_active, is_default, enviro
 INSERT OR REPLACE INTO payment_gateways (id, name, is_active, is_default, environment, public_key, secret_key_encrypted, api_key_encrypted, contract_code, webhook_secret_encrypted, merchant_id, bank_name, account_number, account_name, updated_at) VALUES ('manual_bank', 'Direct Corporate Bank Deposit (Manual)', 1, 0, 'production', '', '', '', '', '', '', 'Moniepoint MFB', '9131797675', 'BUKAR DATA SUB LTD', '2026-10-26T12:00:00.000Z');
 
 -- Table: api_providers (5 records)
-INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_vtpass', 'VTPass Direct API', 'airtime', 'sandbox', 'https://sandbox.vtpass.com/api', 'vtp_live_****8912', 'xcf3kSTKfrGz1A7I:RHmZLTSJ9fBS5nvISEOJLw==:SxYecH3HY94lQ1VBw4u0/nutAmqKbJi7', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
-INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_clubk', 'ClubKonnect VTU Gateway', 'data', 'production', 'https://www.clubkonnect.com/api/v1', 'ck_live_****3198', '1f8YkOoHR3C7A2Bi:0fe1Gtoa3Jk2KJInixjj9A==:eZAB5QdQg05zGD1BncrR6bcMcY5ULTo=', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
-INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_monnify', 'Monnify Virtual Accounts Gateway', 'payment', 'production', 'https://api.monnify.com/api/v1', 'MNFY_****9912', 'v7FTvzWCA5wqvglQ:yzcnAo0F/iMYJLJk5pxdBQ==:jI9FwO//56w0X00KKFxqB2oksw==', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
-INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_paystack', 'Paystack Payment Gateway', 'payment', 'production', 'https://api.paystack.co', 'bds_paystack_****5510', 'v6FXB21DKQNALl+z:SEhwBYKSfTMS4cm9JK/vnA==:UMV+VDMHIi4vi8BHfkDQ5vKa6cB65ZQd', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
-INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_simhost', 'Telecom SIM Hosting Gateway Alpha', 'sim_hosting', 'production', 'https://gateway.simhost.ng/api/v2', 'sim_live_****4401', 'vCHqI8CpMSf0zRQU:7YuygUaZ8T0rO4VLcLA6FA==:NydrSqG4XavsyzqqYn7yBw==', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_vtpass', 'VTPass Direct API', 'airtime', 'sandbox', 'https://sandbox.vtpass.com/api', 'vtp_live_****8912', 'jU2FIKiEHyHx7m/u:7bhpqO/hLHL1OS7BS7pNQQ==:tZxO/bFBhgk00Gab3h/fSzxr3XKm/UIQ', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_clubk', 'ClubKonnect VTU Gateway', 'data', 'production', 'https://www.clubkonnect.com/api/v1', 'ck_live_****3198', 'aDG/tYYk+ip3JGGa:v7YfdHx4mfcMGvU+AyXN+Q==:SvQhJgeFTa8y65Hdzy2IGLrY+C4J53Y=', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_monnify', 'Monnify Virtual Accounts Gateway', 'payment', 'production', 'https://api.monnify.com/api/v1', 'MNFY_****9912', 'v4DcSOD/yIuOVH8L:HVy195NQC4AdTZo4mDySQw==:1Wm8o+TB8SsjpoPsCmUJf3CM0w==', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_paystack', 'Paystack Payment Gateway', 'payment', 'production', 'https://api.paystack.co', 'bds_paystack_****5510', 'Tic4FU0BUbJACzMT:bSivbtigAKBufXdsaK8NBQ==:9Yoz6s8ycQKeBuXswNO+kiIRlkr9EjYA', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
+INSERT OR REPLACE INTO api_providers (id, name, category, environment, base_url, api_key_masked, api_secret_encrypted, auth_method, priority, is_active, timeout_seconds, last_health_check, health_status, api_key_encrypted, data_endpoint, airtime_endpoint, cable_endpoint, electricity_endpoint, balance_endpoint, http_method, created_at) VALUES ('prv_simhost', 'Telecom SIM Hosting Gateway Alpha', 'sim_hosting', 'production', 'https://gateway.simhost.ng/api/v2', 'sim_live_****4401', '4+UKzSEpB1p2P7qy:Tunr+BZtFt1qYBfELE2XrQ==:KZMGhWE5E2X5l8ewGPJaOA==', 'bearer_token', 1, 1, 15, '2026-10-26T12:00:00.000Z', 'HEALTHY', '', '/data', '/airtime', '/cable', '/electricity', '/balance', 'POST', '2026-10-26T12:00:00.000Z');
 
 -- Table: sim_hosts (3 records)
 INSERT OR REPLACE INTO sim_hosts (id, provider_name, server_url, sim_slot, phone_number, network, airtime_balance, status, last_heartbeat, daily_sms_sent, daily_sms_limit, ussd_code_template, created_at) VALUES ('sim_slot_1', 'Telecom Server Alpha', 'https://simserver1.telecom.net', 1, '', 'MTN', 0, 'OFFLINE', '2026-10-26T12:00:00.000Z', 0, 1000, '*556#', '2026-10-26T12:00:00.000Z');

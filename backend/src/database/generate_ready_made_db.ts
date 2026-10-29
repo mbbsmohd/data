@@ -172,6 +172,31 @@ CREATE TABLE IF NOT EXISTS payment_requests (
   created_at TEXT NOT NULL
 );
 
+
+-- 5b. Dedicated Virtual Reserved Accounts (Monnify, PalmPay, Paystack)
+CREATE TABLE IF NOT EXISTS reserved_accounts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL DEFAULT 'monnify', -- monnify, palmpay, paystack, flutterwave, manual_bank
+  bank_name TEXT NOT NULL, -- Wema Bank, Sterling Bank, Fidelity Bank, PalmPay MFB, Moniepoint MFB
+  bank_code TEXT DEFAULT '',
+  account_number TEXT NOT NULL,
+  account_name TEXT NOT NULL,
+  account_reference TEXT NOT NULL,
+  reservation_reference TEXT,
+  currency TEXT NOT NULL DEFAULT 'NGN',
+  status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, INACTIVE, SUSPENDED
+  bvn TEXT,
+  nin TEXT,
+  collection_channel TEXT DEFAULT 'RESERVED_ACCOUNT',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Ready-Made View Aliases (Matching reserveAccounts and reserve_accounts)
+CREATE VIEW IF NOT EXISTS reserveAccounts AS SELECT * FROM reserved_accounts;
+CREATE VIEW IF NOT EXISTS reserve_accounts AS SELECT * FROM reserved_accounts;
+
 -- 6. Services Catalogue
 CREATE TABLE IF NOT EXISTS services (
   id TEXT PRIMARY KEY,
@@ -752,6 +777,12 @@ CREATE INDEX IF NOT EXISTS idx_fin_reconcil_status ON financial_reconciliations(
 CREATE INDEX IF NOT EXISTS idx_staff_tasks_status ON staff_tasks(status, priority);
 CREATE INDEX IF NOT EXISTS idx_staff_tasks_assignee ON staff_tasks(assigned_to_user_id);
 CREATE INDEX IF NOT EXISTS idx_task_comments_task ON staff_task_comments(task_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_user ON reserved_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_num ON reserved_accounts(account_number);
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_ref ON reserved_accounts(account_reference);
+CREATE INDEX IF NOT EXISTS idx_reserve_acc_provider ON reserved_accounts(provider);
+
 `;
 
 db.exec(SCHEMA_SQL);
@@ -809,6 +840,20 @@ db.prepare(`
     id, user_id, balance, commission_balance, currency, is_locked, created_at, updated_at
   ) VALUES (?, ?, 0.0, 0.0, 'NGN', 0, ?, ?)
 `).run(walletId, adminId, now, now);
+
+
+// 3b. Dedicated Reserved Virtual Accounts (Monnify, PalmPay, Moniepoint)
+const insertReserved = db.prepare(`
+  INSERT INTO reserved_accounts (
+    id, user_id, provider, bank_name, bank_code, account_number, account_name,
+    account_reference, reservation_reference, currency, status, collection_channel, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'NGN', 'ACTIVE', 'RESERVED_ACCOUNT', ?, ?)
+`);
+insertReserved.run('res_wema_001', adminId, 'monnify', 'Wema Bank', '035', '9938128312', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-WEMA', 'MNFY_RES_001', now, now);
+insertReserved.run('res_sterling_001', adminId, 'monnify', 'Sterling Bank', '232', '8812739123', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-STERLING', 'MNFY_RES_002', now, now);
+insertReserved.run('res_fidelity_001', adminId, 'monnify', 'Fidelity Bank', '070', '7712391283', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-FIDELITY', 'MNFY_RES_003', now, now);
+insertReserved.run('res_palmpay_001', adminId, 'palmpay', 'PalmPay MFB', '999991', '8012345678', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-PALMPAY', 'PLM_RES_001', now, now);
+insertReserved.run('res_moniepoint_001', adminId, 'manual_bank', 'Moniepoint MFB', '50515', '9131797675', 'BUKAR DATA SUB LTD', 'BDS-CORP-MONIEPOINT', 'MNP_CORP_001', now, now);
 
 // 4. Payment Gateways
 const insertGateway = db.prepare(`
@@ -1089,7 +1134,7 @@ ${SCHEMA_SQL}
 `;
 
   const tablesToExport = [
-    'system_settings', 'users', 'wallets', 'payment_gateways', 'api_providers',
+    'system_settings', 'users', 'wallets', 'reserved_accounts', 'payment_gateways', 'api_providers',
     'sim_hosts', 'services', 'service_plans', 'testimonials', 'cms_sections',
     'cms_revisions', 'mobile_app_config', 'notification_templates'
   ];
@@ -1268,6 +1313,40 @@ CREATE TABLE \`ledger_entries\` (
   CONSTRAINT \`fk_ledger_user\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`),
   CONSTRAINT \`fk_ledger_wallet\` FOREIGN KEY (\`wallet_id\`) REFERENCES \`wallets\` (\`id\`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+-- --------------------------------------------------------
+-- Table structure for reserved_accounts
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS \`reserved_accounts\`;
+CREATE TABLE \`reserved_accounts\` (
+  \`id\` VARCHAR(64) NOT NULL,
+  \`user_id\` VARCHAR(64) NOT NULL,
+  \`provider\` VARCHAR(64) NOT NULL DEFAULT 'monnify',
+  \`bank_name\` VARCHAR(128) NOT NULL,
+  \`bank_code\` VARCHAR(32) DEFAULT '',
+  \`account_number\` VARCHAR(64) NOT NULL,
+  \`account_name\` VARCHAR(191) NOT NULL,
+  \`account_reference\` VARCHAR(128) NOT NULL,
+  \`reservation_reference\` VARCHAR(128) DEFAULT NULL,
+  \`currency\` VARCHAR(16) NOT NULL DEFAULT 'NGN',
+  \`status\` VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+  \`bvn\` VARCHAR(64) DEFAULT NULL,
+  \`nin\` VARCHAR(64) DEFAULT NULL,
+  \`collection_channel\` VARCHAR(64) DEFAULT 'RESERVED_ACCOUNT',
+  \`created_at\` VARCHAR(64) NOT NULL,
+  \`updated_at\` VARCHAR(64) NOT NULL,
+  PRIMARY KEY (\`id\`),
+  KEY \`idx_reserve_acc_user\` (\`user_id\`),
+  KEY \`idx_reserve_acc_num\` (\`account_number\`),
+  KEY \`idx_reserve_acc_ref\` (\`account_reference\`),
+  KEY \`idx_reserve_acc_provider\` (\`provider\`),
+  CONSTRAINT \`fk_reserve_user\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE OR REPLACE VIEW \`reserveAccounts\` AS SELECT * FROM \`reserved_accounts\`;
+CREATE OR REPLACE VIEW \`reserve_accounts\` AS SELECT * FROM \`reserved_accounts\`;
 
 -- --------------------------------------------------------
 -- Table structure for payment_gateways
@@ -1772,4 +1851,19 @@ console.log('🎉 FULL READY-MADE DATABASE SUITE GENERATION COMPLETE!');
 console.log('1. SQLite Binary   :', SQLITE_OUT_PATH);
 console.log('2. Standard SQL    :', SQL_OUT_PATH);
 console.log('3. MySQL / cPanel  :', MYSQL_OUT_PATH);
+
+// Copy output files directly to root database.sqlite and database.sql
+const ROOT_SQLITE = path.resolve(ROOT_DIR, 'database.sqlite');
+const ROOT_SQL = path.resolve(ROOT_DIR, 'database.sql');
+const BACKEND_DB = path.resolve(ROOT_DIR, 'backend', 'data', 'platform.sqlite');
+
+fs.copyFileSync(SQLITE_OUT_PATH, ROOT_SQLITE);
+fs.copyFileSync(SQL_OUT_PATH, ROOT_SQL);
+if (fs.existsSync(path.dirname(BACKEND_DB))) {
+  fs.copyFileSync(SQLITE_OUT_PATH, BACKEND_DB);
+}
+console.log('✅ Synchronized single root database files:');
+console.log('   - database.sqlite (' + (fs.statSync(ROOT_SQLITE).size / 1024).toFixed(1) + ' KB)');
+console.log('   - database.sql (' + (fs.statSync(ROOT_SQL).size / 1024).toFixed(1) + ' KB)');
+
 console.log('======================================================\n');

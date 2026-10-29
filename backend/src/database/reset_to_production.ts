@@ -93,6 +93,25 @@ db.prepare(`
   VALUES (?, ?, 0.0, 0.0, 'NGN', 0, ?, ?)
 `).run(walletId, adminId, now, now);
 
+// Re-seed root administrator reserved accounts
+try {
+  const insertReserved = db.prepare(`
+    INSERT OR REPLACE INTO reserved_accounts (
+      id, user_id, provider, bank_name, bank_code, account_number, account_name,
+      account_reference, reservation_reference, currency, status, collection_channel, created_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'NGN', 'ACTIVE', 'RESERVED_ACCOUNT', ?, ?)
+  `);
+  insertReserved.run('res_wema_001', adminId, 'monnify', 'Wema Bank', '035', '9938128312', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-WEMA', 'MNFY_RES_001', now, now);
+  insertReserved.run('res_sterling_001', adminId, 'monnify', 'Sterling Bank', '232', '8812739123', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-STERLING', 'MNFY_RES_002', now, now);
+  insertReserved.run('res_fidelity_001', adminId, 'monnify', 'Fidelity Bank', '070', '7712391283', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-FIDELITY', 'MNFY_RES_003', now, now);
+  insertReserved.run('res_palmpay_001', adminId, 'palmpay', 'PalmPay MFB', '999991', '8012345678', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-PALMPAY', 'PLM_RES_001', now, now);
+  insertReserved.run('res_moniepoint_001', adminId, 'manual_bank', 'Moniepoint MFB', '50515', '9131797675', 'BUKAR DATA SUB LTD', 'BDS-CORP-MONIEPOINT', 'MNP_CORP_001', now, now);
+  console.log('  ✅ Created ready-made dedicated Reserved Accounts (Wema, Sterling, Fidelity, PalmPay, Moniepoint)');
+} catch (e: any) {
+  console.warn('Could not reseed reserved_accounts:', e.message);
+}
+
 console.log('  ✅ Created clean production Super Administrator: admin@bukardatasub.com (Wallet: ₦0.00)');
 
 // 4. Reset SIM Hosting hardware to 0.00 offline baseline

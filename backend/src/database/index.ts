@@ -111,6 +111,30 @@ export function initializeDatabase() {
       created_at TEXT NOT NULL
     );
 
+    -- Dedicated Virtual Reserved Accounts (Monnify, PalmPay, Paystack)
+    CREATE TABLE IF NOT EXISTS reserved_accounts (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL DEFAULT 'monnify', -- monnify, palmpay, paystack, flutterwave, manual_bank
+      bank_name TEXT NOT NULL, -- Wema Bank, Sterling Bank, Fidelity Bank, PalmPay MFB, Moniepoint MFB
+      bank_code TEXT DEFAULT '',
+      account_number TEXT NOT NULL,
+      account_name TEXT NOT NULL,
+      account_reference TEXT NOT NULL,
+      reservation_reference TEXT,
+      currency TEXT NOT NULL DEFAULT 'NGN',
+      status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, INACTIVE, SUSPENDED
+      bvn TEXT,
+      nin TEXT,
+      collection_channel TEXT DEFAULT 'RESERVED_ACCOUNT',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    -- Ready-Made View Aliases (Supporting reserveAccounts and reserve_accounts)
+    CREATE VIEW IF NOT EXISTS reserveAccounts AS SELECT * FROM reserved_accounts;
+    CREATE VIEW IF NOT EXISTS reserve_accounts AS SELECT * FROM reserved_accounts;
+
     -- Services Catalogue
     CREATE TABLE IF NOT EXISTS services (
       id TEXT PRIMARY KEY,
@@ -450,12 +474,43 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
     CREATE INDEX IF NOT EXISTS idx_otp_verify ON otp_verifications(identifier, code, is_used);
     CREATE INDEX IF NOT EXISTS idx_testimonials_pub ON testimonials(is_published, sort_order);
+    CREATE INDEX IF NOT EXISTS idx_reserve_acc_user ON reserved_accounts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_reserve_acc_num ON reserved_accounts(account_number);
+    CREATE INDEX IF NOT EXISTS idx_reserve_acc_ref ON reserved_accounts(account_reference);
+    CREATE INDEX IF NOT EXISTS idx_reserve_acc_provider ON reserved_accounts(provider);
   `);
 
   // Safe schema migrations for enhanced features
   const safeAlter = (sql: string) => {
     try { db.exec(sql); } catch {}
   };
+
+  safeAlter(`
+    CREATE TABLE IF NOT EXISTS reserved_accounts (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL DEFAULT 'monnify',
+      bank_name TEXT NOT NULL,
+      bank_code TEXT DEFAULT '',
+      account_number TEXT NOT NULL,
+      account_name TEXT NOT NULL,
+      account_reference TEXT NOT NULL,
+      reservation_reference TEXT,
+      currency TEXT NOT NULL DEFAULT 'NGN',
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      bvn TEXT,
+      nin TEXT,
+      collection_channel TEXT DEFAULT 'RESERVED_ACCOUNT',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+  safeAlter("CREATE VIEW IF NOT EXISTS reserveAccounts AS SELECT * FROM reserved_accounts");
+  safeAlter("CREATE VIEW IF NOT EXISTS reserve_accounts AS SELECT * FROM reserved_accounts");
+  safeAlter("CREATE INDEX IF NOT EXISTS idx_reserve_acc_user ON reserved_accounts(user_id)");
+  safeAlter("CREATE INDEX IF NOT EXISTS idx_reserve_acc_num ON reserved_accounts(account_number)");
+  safeAlter("CREATE INDEX IF NOT EXISTS idx_reserve_acc_ref ON reserved_accounts(account_reference)");
+  safeAlter("CREATE INDEX IF NOT EXISTS idx_reserve_acc_provider ON reserved_accounts(provider)");
 
   safeAlter("ALTER TABLE system_settings ADD COLUMN smtp_host TEXT DEFAULT ''");
   safeAlter("ALTER TABLE system_settings ADD COLUMN smtp_port INTEGER DEFAULT 587");
@@ -1023,6 +1078,28 @@ function seedInitialData() {
       INSERT INTO wallets (id, user_id, balance, commission_balance, currency, is_locked, created_at, updated_at)
       VALUES ('wal_root_admin', ?, 0.0, 0.0, 'NGN', 0, ?, ?)
     `).run(adminId, now, now);
+  }
+
+  // Seed Ready-Made Dedicated Reserved Accounts (Monnify, PalmPay, Moniepoint)
+  try {
+    const reservedCheck = db.prepare('SELECT COUNT(*) as count FROM reserved_accounts').get() as { count: number };
+    if (!reservedCheck || reservedCheck.count === 0) {
+      const insertReserved = db.prepare(`
+        INSERT OR IGNORE INTO reserved_accounts (
+          id, user_id, provider, bank_name, bank_code, account_number, account_name,
+          account_reference, reservation_reference, currency, status, collection_channel, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'NGN', 'ACTIVE', 'RESERVED_ACCOUNT', ?, ?)
+      `);
+
+      insertReserved.run('res_wema_001', 'usr_root_admin', 'monnify', 'Wema Bank', '035', '9938128312', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-WEMA', 'MNFY_RES_001', now, now);
+      insertReserved.run('res_sterling_001', 'usr_root_admin', 'monnify', 'Sterling Bank', '232', '8812739123', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-STERLING', 'MNFY_RES_002', now, now);
+      insertReserved.run('res_fidelity_001', 'usr_root_admin', 'monnify', 'Fidelity Bank', '070', '7712391283', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-FIDELITY', 'MNFY_RES_003', now, now);
+      insertReserved.run('res_palmpay_001', 'usr_root_admin', 'palmpay', 'PalmPay MFB', '999991', '8012345678', 'BUKAR DATA SUB / MOHAMMED ADAMU', 'BDS-RES-ROOT-PALMPAY', 'PLM_RES_001', now, now);
+      insertReserved.run('res_moniepoint_001', 'usr_root_admin', 'manual_bank', 'Moniepoint MFB', '50515', '9131797675', 'BUKAR DATA SUB LTD', 'BDS-CORP-MONIEPOINT', 'MNP_CORP_001', now, now);
+    }
+  } catch (err) {
+    console.warn('Could not seed reserved_accounts:', err);
   }
 
   // Initial SIM Hosting Hardware Inventory (Zero dummy balances, ready for live modem pairing)

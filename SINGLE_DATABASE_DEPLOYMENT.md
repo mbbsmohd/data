@@ -9,14 +9,15 @@ You now have a **single, ready-to-deploy database file** right in the root of yo
 ## 🌟 What is Inside this Single File?
 
 This single file contains the **entire production backend database**:
-- **All 41 tables and indexes** created and pre-indexed.
+- **All 42 tables, indexes, and reserveAccounts views** created and pre-indexed.
 - **Root Super Admin Account**:
   - **Email**: `admin@bukardatasub.com`
   - **Password**: `BukarData#2026`
   - **Transaction PIN**: `1234`
   - **Role & Tier**: `super_admin` (Tier 3)
 - **Official Branding**: Bukar Data Sub, `support@bukardatasub.com`, `09131797675`, `₦ (NGN)`.
-- **Payment Gateways**: Monnify, Paystack, PalmPay, Flutterwave, and Direct Corporate Bank Deposit (`Moniepoint MFB - 9131797675 - BUKAR DATA SUB LTD`).
+- **Payment Gateways**:
+- **Dedicated Virtual Reserved Accounts (reserveAccounts / reserved_accounts)**: Pre-loaded with dedicated NUBANs for Wema Bank, Sterling Bank, Fidelity Bank, PalmPay, and Moniepoint. Monnify, Paystack, PalmPay, Flutterwave, and Direct Corporate Bank Deposit (`Moniepoint MFB - 9131797675 - BUKAR DATA SUB LTD`).
 - **Telecom Services & Plans**: MTN SME (500MB, 1GB, 2GB, 5GB, 10GB), Airtel CG (1GB, 2GB), Glo CG (1GB, 3GB), SunKing Solar PINs (1-Day, 7-Day, 30-Day), Cable TV, Electricity, Airtime to Cash, Bulk SMS.
 - **CMS & Landing Pages**: Pre-populated hero section, services promo, footer, legal & privacy policies.
 - **Mobile Remote Config**: Live update flags and theme settings.

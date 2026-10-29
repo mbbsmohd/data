@@ -124,6 +124,32 @@ export class PaymentGatewayService {
     const user = db.prepare('SELECT id, name, email, phone, virtual_account_bank, virtual_account_number, virtual_account_name FROM users WHERE id = ?').get(userId) as any;
     if (!user) throw new Error('User not found');
 
+    // Check if user already has dedicated accounts in reserved_accounts table
+    try {
+      const existing = db.prepare("SELECT * FROM reserved_accounts WHERE user_id = ? AND status = 'ACTIVE' ORDER BY id ASC").all(userId) as any[];
+      if (existing && existing.length > 0) {
+        const primary = existing[0];
+        return {
+          bankName: primary.bank_name,
+          accountNumber: primary.account_number,
+          accountName: primary.account_name,
+          bankCode: primary.bank_code,
+          provider: primary.provider,
+          accounts: existing.map(a => ({
+            id: a.id,
+            bankName: a.bank_name,
+            bankCode: a.bank_code,
+            accountNumber: a.account_number,
+            accountName: a.account_name,
+            provider: a.provider,
+            currency: a.currency,
+            status: a.status
+          })),
+          isAutomated: true
+        };
+      }
+    } catch {}
+
     if (user.virtual_account_number && user.virtual_account_bank) {
       return {
         bankName: user.virtual_account_bank,
@@ -542,5 +568,33 @@ export class PaymentGatewayService {
     }
 
     return { success: true, processed: false, message: 'Event ignored or not a successful charge' };
+  }
+
+  /**
+   * Get all active reserved accounts for a specific user
+   */
+  static getReservedAccounts(userId: string) {
+    try {
+      return db.prepare("SELECT * FROM reserved_accounts WHERE user_id = ? AND status = 'ACTIVE' ORDER BY id ASC").all(userId);
+    } catch (err: any) {
+      console.error('getReservedAccounts error:', err.message);
+      return [];
+    }
+  }
+
+  /**
+   * Super Admin: View all reserved accounts across all users
+   */
+  static getAllReservedAccounts() {
+    try {
+      return db.prepare(`
+        SELECT r.*, u.name as user_name, u.email as user_email, u.phone as user_phone
+        FROM reserved_accounts r
+        JOIN users u ON r.user_id = u.id
+        ORDER BY r.created_at DESC
+      `).all();
+    } catch {
+      return [];
+    }
   }
 }

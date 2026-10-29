@@ -52,7 +52,7 @@ sqlite3 backend/data/platform.sqlite < database/bukardatasub_production.sql
 3. Click on the **Import** tab at the top.
 4. Click **Choose File** and select `database/bukardatasub_mysql.sql`.
 5. Click **Import** (or **Go**).
-6. All 41 tables, indexes, and initial production records will be created instantly.
+6. All 42 tables, views (including reserveAccounts), indexes, and initial production records will be created instantly.
 
 ---
 
@@ -69,6 +69,7 @@ sqlite3 backend/data/platform.sqlite < database/bukardatasub_production.sql
 - **Default Transaction PIN**: `1234`
 - **Account Tier**: Tier 3 (Super Admin, Unlimited Quota)
 - **Root Wallet**: `₦0.00` (Pristine, zero fake balances)
-- **Active Gateways Configured**: Monnify, Paystack, PalmPay, Flutterwave, Manual Corporate Transfer (Moniepoint MFB, Account: `9131797675`)
+- **Active Gateways Configured**:
+- **Dedicated Reserved Accounts (reserveAccounts / reserved_accounts)**: 5 pre-configured dedicated virtual bank accounts for Wema Bank (035), Sterling Bank (232), Fidelity Bank (070), PalmPay MFB (999991), and Moniepoint MFB (50515). Monnify, Paystack, PalmPay, Flutterwave, Manual Corporate Transfer (Moniepoint MFB, Account: `9131797675`)
 - **Active Telecom Plans**: MTN SME (500MB, 1GB, 2GB, 5GB, 10GB), Airtel CG (1GB, 2GB), Glo CG (1GB, 3GB), SunKing Solar PINs (1-Day, 7-Day, 30-Day)
 - **Active Notifications**: All 39 system event templates with responsive HTML and SMS copy.
